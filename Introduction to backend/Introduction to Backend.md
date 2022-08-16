@@ -14,10 +14,11 @@ Outline:
     - [**HTTTP Response**](#htttp-response)
   - [Database](#database)
   - [Language](#language)
+  - [Summary](#summary)
 
 ## Apa itu backend?
 
-**Back-end** merupakan pengembangan yang berfokus untuk memenuhi kebutuhan dan fungsional aplikasi yang tidak terlihat oleh user atau pengguna, berfokus pada **sisi server** dan **logika aplikasi** agar website berfungsi dengan baik seperti bagaimana data disimpan, diproses dan ditampilkan. Orang yang fokus pada Back-end disebut sebagai Back-end Developers. 
+**Back-end** merupakan pengembangan yang berfokus untuk memenuhi kebutuhan dan fungsional aplikasi yang tidak terlihat oleh user atau pengguna. Berfokus pada **sisi server** dan **logika aplikasi** agar website berfungsi dengan baik seperti bagaimana data disimpan, diproses dan ditampilkan. Orang yang fokus pada Back-end disebut sebagai Back-end Developers. 
 
 ## Peran Back-end dalam pengembangan web
 
@@ -87,7 +88,27 @@ Ada beberapa tools dan teknologi yang digunakan dalam Back-end development yang 
   
 ### Database
 
+Database atau basis data adalah kumpulan data yang sistematis. Database bisa memanipulasi data dan memudahkan dalam mengelola data. Dalam pengembangan aplikasi dibutuhkan sebuah database yang akan menyimpan informasi, data, dan file. 
 
+Mari kita lihat contoh database, sebuah situs e-commerce menggunakan database untuk menyimpan data katalog produk (nama, harga, deskripsi, dan gambar), kategori produk, dan data pengguna situs.
+
+Database memiliki banyak jenis dan tipe, sebagai seorang Backend developer kita setidaknya familiar dengan tipe database Relational (SQL) atau Non-relational (NoSQL) untuk lebih detailnya akan dibahas pada materi Database.
   
 ### Language
+
+Bahasa pemrograman yang digunakan pada Backend development sebenarnya tidak ada patokan mana yang paling benar atau bahasa mana yang paling bagus, tapi dalam memilih bahasa yang ingin digunakan harus berdasarkan kebutuhan projek, kemampuan sumber daya manusia dan pertimbangan lainnya.
+Namun yang jelas bahasa yang akan digunakan dalam Backend development adalah bahasa yang mendukung object-oriented (OOP) atau functional programming.
+
+Dalam bootcamp ini, kita akan menggunakan bahasa TypeScript yang mendukung object-oriented programming (OOP).
+
+### Summary
+
+Kita sudah mengetahui beberapa hal tentang pengenalan Backend development diantaranya:  
+1. Pengertian Backend
+2. Peran Backend dalam pengembangan aplikasi
+3. Tools dan teknologi pada Backend
+
+
+
+
 
