@@ -117,7 +117,7 @@ export interface DatabaseConfig {
 }
 ```
 
-Kemudian, buat folder config di folder infrastructures. Dan didalamnya tambahkan folder environment-config. 
+Kemudian, buatlah folder config di folder infrastructures. Dan didalamnya tambahkan folder environment-config. 
 
 Kemudian tambahkan environment module dan service dengan nama ``environment-config.module.ts`` dan ``environment-config.service.ts``.
 
@@ -158,15 +158,15 @@ export class EnvironmentConfigService implements DatabaseConfig {
 }
 ```
 
-Dan di environment-config module menjadi berikut ini:
+Dan di environment-config module tambahkan kode berikut ini:
 
 ```
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: './env/local.env',
       ignoreEnvFile:
-        process.env.NODE_ENV === 'local' || process.env.NODE_ENV === 'test'
+        process.env.NODE_ENV === 'development' ||
+        process.env.NODE_ENV === 'test'
           ? false
           : true,
       isGlobal: true,
@@ -181,7 +181,20 @@ export class EnvironmentConfigModule {}
 Kemudian ubah script start:dev di ``package.json``.
 
 ```
-"start:dev": "NODE_ENV=local nest start --watch",
+"start:dev": "NODE_ENV=development nest start --watch",
+```
+
+Kemudian tambahkan file ``.env`` dengan kode berikut ini:
+
+```
+DATABASE_HOST=127.0.0.1
+DATABASE_PORT=32768
+DATABASE_USER=your_user
+DATABASE_PASSWORD=your_password
+DATABASE_NAME=your_db_name
+DATABASE_SCHEMA=public
+DATABASE_SYNCHRONIZE=false
+NODE_ENV=development
 ```
 
 ### Menyiapkan Configuration TypeORM
@@ -220,32 +233,17 @@ export const getTypeOrmModuleOptions = (
 })
 export class TypeOrmConfigModule {}
 ```
-Kita akan membutuhkan env, maka diluar folder ``src`` tambahkan folder baru bernama ``env`` dan di dalam folder tersebut tambahkan file bernama ``local.env`` yang berisikan konfigurasi yang ada di local
+
+Kemudian tambahkan ``typeorm.config`` di folder typeorm dengan kode berikut:
 
 ```
-DATABASE_HOST=localhost
-DATABASE_PORT=yourport
-DATABASE_USER=your_user
-DATABASE_PASSWORD=your_password
-DATABASE_NAME=your_db_name
-DATABASE_SCHEMA=public
-DATABASE_SYNCHRONIZE=false
-```
-
-Kemudian tambahkan ``typeorm.config`` di folder yang sama:
-
-```
-if (process.env.NODE_ENV === 'local') {
-  dotenv.config({ path: './env/local.env' });
-}
-
 const config = new DataSource({
   type: 'postgres',
-  host: 'localhost',
-  port: 32771,
-  username: 'postgres',
-  password: 'postgres',
-  database: 'nest',
+  host: process.env.DATABASE_HOST,
+  port: 32768,
+  username: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME,
   entities: [__dirname + './../../**/*.entity{.ts,.js}'],
   synchronize: true,
   schema: process.env.DATABASE_SCHEMA,
@@ -288,13 +286,51 @@ Perintah diatas akan generate migration file. Kemudian buka filenya dan tambahka
 
 ```
 public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `CREATE TABLE "public"."user" ("id" int NOT NULL, "username" varchar, "fullname" varchar, "password" varchar, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_b67337b7f8aa8406e936c2ff754" UNIQUE ("username"), CONSTRAINT "PK_03b91d2b8321aa7ba32257dc321" PRIMARY KEY ("id"))`,
+    await queryRunner.createTable(
+      new Table({
+        name: 'users',
+        columns: [
+          {
+            name: 'id',
+            type: 'int',
+            isPrimary: true,
+            isGenerated: true,
+          },
+          {
+            name: 'email',
+            type: 'varchar',
+            isUnique: true,
+            isNullable: false,
+          },
+          {
+            name: 'name',
+            type: 'varchar',
+            isNullable: false,
+          },
+          {
+            name: 'password',
+            type: 'varchar',
+            isNullable: false,
+          },
+          {
+            name: 'created_at',
+            type: 'timestamp',
+            default: 'now()',
+            isNullable: false,
+          },
+          {
+            name: 'updated_at',
+            type: 'timestamp',
+            default: 'now()',
+            isNullable: false,
+          },
+        ],
+      }),
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE "public"."user"`);
+    await queryRunner.dropTable('users')
   }
 ```
 
@@ -309,14 +345,17 @@ npm run typeorm_src migration:run
 Entity merupakan sebuah kelas yang memetakan ke tabel database. Entity dapat dibuat dengan menambahkan tanda ``@Entity()``. Entity berada di dalam infrastructures maka buatlah folder baru bernama ``entitites`` dan tambahkan file ``user.entity``. Kemudian tambahkan kode berikut:
 
 ```
-@Entity()
+@Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('increment')
   id: number;
 
   @Index({ unique: true })
   @Column('varchar', { unique: true })
-  username: string;
+  email: string;
+
+  @Column('varchar')
+  name: string;
 
   @Column('varchar')
   password: string;
@@ -334,8 +373,8 @@ Kemudian tambahkan model user di domains dengan cara menambahkan folder baru ber
 ```
 export class UserM {
   id: number;
-  username: string;
-  fullname: string;
+  email: string;
+  name: string;
   password: string;
   created_at: Date;
   updated_at: Date;
@@ -349,12 +388,12 @@ Langkah selanjutnya adalah membuat interface repository yang ada di domains. Bua
 Dan tambahkan kode berikut:
 
 ```
-export interface UserRepositroy {
-  getUser(): Promise<UserM[]>;
+export interface UserRepository {
+  getAllUsers(): Promise<UserM[]>;
 }
 ```
 
-Untuk mengimplementasikan interface tersebut, tambahkan folder baru di ``infrastructures`` kemudian didalamnya tambahkan module repository ``repositores.module.ts``.  
+Untuk mengimplementasikan interface tersebut, tambahkan folder ``repositories`` di ``infrastructures`` kemudian didalamnya tambahkan module repository ``repositores.module.ts``.  
 
 Dan tambahkan kode berikut:
 
@@ -386,8 +425,8 @@ export class UserRepositoryOrm implements UserRepository {
     const user: UserM = new UserM();
 
     user.id = userEntity.id;
-    user.username = userEntity.username;
-    user.fullname = userEntity.fullname;
+    user.email = userEntity.email;
+    user.name = userEntity.name;
     user.password = userEntity.password;
     user.created_at = userEntity.created_at;
     user.updated_at = userEntity.updated_at;
@@ -406,21 +445,21 @@ export class GetAllUserUseCases {
   constructor(private usersRepository: UserRepositoryOrm) {}
 
   async execute(): Promise<UserM[]> {
-    return await this.usersRepository.getAllUser();
+    return await this.usersRepository.getAllUsers();
   }
 }
 ```
 
-Di dalam use case lah berisi kode yang mengatur aliran data dari dan ke entitas, setiap use case hanya akan menangani satu aksi misalnya use case get all users.
+Di dalam use case inilah berisi kode yang mengatur aliran data dari dan ke entitas, setiap use case hanya akan menangani satu aksi misalnya use case get all users yang bertujuan untuk mendapatkan data seluruh users.
 
-Selanjutnya kita membutuhkan use cases proxy yang akan menghubungkan use case dengan infrastructure. Maka buatlah folder ``usecase-proxy`` dan tambahkan module ``usecase-proxy.module.ts`` dan tulis kode berikut:
+Selanjutnya kita membutuhkan use cases proxy yang akan menghubungkan use case dengan infrastructure. Maka buatlah folder ``usecase-proxy`` di ``infrastructures`` dan tambahkan module ``usecase-proxy.module.ts`` dan tulis kode berikut:
 
 ```
 @Module({
   imports: [EnvironmentConfigModule, RepositoriesModule],
 })
 export class UsecaseProxyModule {
-  static GET_USERS_USE_CASE = 'getUsersUsecaseProxy';
+  static GET_ALL_USERS_USE_CASE = 'getAllUsersUsecaseProxy';
 
   static register(): DynamicModule {
     return {
@@ -428,12 +467,12 @@ export class UsecaseProxyModule {
       providers: [
         {
           inject: [UserRepositoryOrm],
-          provide: UsecaseProxyModule.GET_USERS_USE_CASE,
+          provide: UsecaseProxyModule.GET_ALL_USERS_USE_CASE,
           useFactory: (userRepository: UserRepositoryOrm) =>
-            new UseCaseProxy(new GetUserUseCases(userRepository)),
+            new UseCaseProxy(new GetAllUserUseCases(userRepository)),
         },
       ],
-      exports: [UsecaseProxyModule.GET_USERS_USE_CASE],
+      exports: [UsecaseProxyModule.GET_ALL_USERS_USE_CASE],
     };
   }
 }
@@ -446,42 +485,25 @@ Selanjutnya kita akan menambahkan presentations layer. Tambahkan folder user di 
 Kemudian tambahkan kode berikut ini:
 
 ```
-@Controller('')
+@Controller('users')
 export class UserController {
   constructor(
     @Inject(UsecaseProxyModule.GET_ALL_USERS_USE_CASE)
     private readonly getUserUsecaseProxy: UseCaseProxy<GetAllUserUseCases>,
   ) {}
 
-  @Get('users')
-  async getUsers() {
-    const users = await this.getUserUsecaseProxy.getInstance().execute();
-    return users.map((user) => new UserPresenter(user));
+  @Get('')
+  async getAllUsers() {
+    const result = await this.getUserUsecaseProxy.getInstance().execute();
+    return {
+      status: 'OK',
+      code: 200,
+      message: 'Get data success',
+      data: result,
+    };
   }
 }
 ```
-
-Karena kita belum menambahkan ``User Presenter`` maka buatlah file baru bernama ``user.presenter.ts`` kemudian isi dengan kode berikut ini:
-
-```
-export class UserPresenter {
-  id: number;
-  username: string;
-  password: string;
-  create_date: Date;
-  updated_date: Date;
-
-  constructor(user: UserM) {
-    this.id = user.id;
-    this.username = user.username;
-    this.password = user.password;
-    this.create_date = user.create_date;
-    this.updated_date = user.updated_date;
-  }
-}
-```
-
-User Presenter berfungsi untuk menampilkan data ke user.
 
 Kemudian tambahkan user module yang didalamnya berisi user controller.
 
